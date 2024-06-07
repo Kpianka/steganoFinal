@@ -1,0 +1,98 @@
+<!DOCTYPE html> 
+<html lang="pl">  
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Kalkulator Całek przez Części</title> 
+    <link rel="stylesheet" type="text/css" href="css/style.css">  
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script> 
+    <script>   
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$']]
+            }
+        };
+
+        function formatLaTeX(expression) {
+            return expression.toString().replace(/\*/g, '\\cdot ').replace(/\//g, ' \\div ');
+        }
+
+        function simulateClick() {
+            var button = document.querySelector(".button");
+            button.click();
+        }
+    </script>
+    <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+    <div class="calculator">
+        <h2>Kalkulator Całek przez Części</h2>
+        <p>$\int f(x) \cdot g'(x) \ dx = f(x) ⋅ g(x) - \int f'(x) \cdot g(x)\ dx $</p>
+        <label for="function1"> Funkcja do całkowania: $\int $</label>
+        <input type="text" id="function1"><br><br>
+        <label for="function2">Funkcja całkująca: $\int $</label>
+        <input type="text" id="function2"><br><br>
+        <button class="button"  style="vertical-align:middle" onclick="calculateIntegrationByParts()">Oblicz</button><br><br>
+    </div>
+
+    <div class="result" id="part1"></div>
+    <div class="result" id="part2"></div>
+    <div class="result" id="part3"></div>
+    <div class="result" id="part4"></div>
+    <div class="result" id="part5"></div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.min.js"></script>
+    <script>
+        function calculateIntegrationByParts() {
+            var expression = document.getElementById("function1").value;
+            var expression2 = document.getElementById("function2").value;
+            var resultDivs = document.getElementsByClassName("result");
+            try {
+                var derivative = math.derivative(expression, 'x');
+                var derivative2 = math.derivative(expression2, 'x');
+                var resultText = `Pochodna funkcji: $${derivative}$ + $${derivative2}$`;
+                var derivativeRight = math.simplify(`${derivative} * ${expression2}`);
+                var derivativeLeft = math.simplify(`${expression} * ${expression2}`);
+
+                Array.from(resultDivs).forEach(function(resultDiv, index) {
+                    var id = resultDiv.id;
+                    if (id === "part1") {
+                        resultDiv.innerHTML = `Na poczatku obliczamy<br>$\\frac{d}{dx} f(x)$ <br>czyli:<br>$\\frac{d}{dx} ${formatLaTeX(derivative)}$`;
+                    } else if (id === "part2") {
+                        resultDiv.innerHTML = `teraz podstawiamy pod wzór:<br> $${formatLaTeX(expression)} \\cdot ${formatLaTeX(expression2)} - \\int ${formatLaTeX(derivative)} \\cdot ${formatLaTeX(expression2)}$`;
+                    } else if (id === "part3") {
+                        resultDiv.innerHTML = `Teraz upraszczamy:<br> $${formatLaTeX(math.simplify(`${expression} * ${expression2}`))} - \\int ${formatLaTeX(math.simplify(`${derivative} * ${expression2}`))}$`;
+                    } else if (id === "part4") {
+                        resultDiv.innerHTML = `Liczymy pozostałą całkę:<br> $${formatLaTeX(math.simplify(`${expression} * ${expression2}`))} - ${formatLaTeX(math.derivative(derivativeRight, 'x'))}$`;
+                    } else if (id === "part5") {
+                        resultDiv.innerHTML = `I upraszczamy na koniec:<br> $${formatLaTeX(math.simplify(`${derivativeLeft} - ${math.derivative(derivativeRight, 'x')}`))}$`;
+                    }
+
+                    resultDiv.style.visibility = "visible";
+                    resultDiv.style.opacity = 0;
+                    setTimeout(() => {
+                        resultDiv.style.opacity = 1;
+                        resultDiv.style.animation = "fadeIn 0.5s ease";
+                    }, index * 200 + 800);
+                });
+
+                MathJax.typeset();
+            } catch (error) {
+                Array.from(resultDivs).forEach(function(resultDiv) {
+                    resultDiv.innerHTML = "Błąd: Niepoprawne wyrażenie matematyczne.";
+                    resultDiv.style.display = "block";
+                    setTimeout(() => {
+                        resultDiv.style.opacity = 1;
+                        resultDiv.style.animation = "fadeIn 0.5s ease";
+                    }, 10);
+                });
+            }
+        }
+
+        simulateClick();
+    </script>
+</body>
+</html>
